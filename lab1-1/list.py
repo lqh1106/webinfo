@@ -1,29 +1,29 @@
 import os
 import json
 import jieba
+import pandas as pd
 from gensim.models import Word2Vec
 from sklearn.cluster import KMeans
 import numpy as np
 
-def build_index(data_dir='data', index_file='index.json', num_clusters=10):
+def build_index(file_path='webinfo/lab1-1/dataset/selected_book_top_1200_data_tag.csv', index_file='webinfo/lab1-1/dataset/index.json', num_clusters=30000):
     sentences = []
     file_word_map = {}
     
-    # Step 1: Read files and tokenize
-    if os.path.exists(data_dir) and os.path.isdir(data_dir):
-        for file in os.listdir(data_dir):
-            file_path = os.path.join(data_dir, file)
-            if os.path.isfile(file_path):
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    words = jieba.lcut(content)
-                    sentences.append(words)
-                    for word in words:
-                        if word not in file_word_map:
-                            file_word_map[word] = set()
-                        file_word_map[word].add(file)
+    # Step 1: Read CSV file and tokenize
+    if os.path.exists(file_path):
+        original_data = pd.read_csv(file_path)
+        for book, booktags in zip(original_data['Book'], original_data['Tags']):
+            booktags = booktags.strip("{}")
+            booktags_list = [item.strip().strip("'") for item in booktags.split(",")]
+            words = booktags_list
+            sentences.append(words)
+            for word in words:
+                if word not in file_word_map:
+                    file_word_map[word] = set()
+                file_word_map[word].add(book)
     else:
-        print(f"Directory '{data_dir}' does not exist.")
+        print(f"File '{file_path}' does not exist.")
         return
 
     # Step 2: Train word2vec model
@@ -43,7 +43,7 @@ def build_index(data_dir='data', index_file='index.json', num_clusters=10):
     
     # Save the index to a file
     with open(index_file, 'w', encoding='utf-8') as f:
-        json.dump({k: list(v) for k, v in index.items()}, f, ensure_ascii=False)
+        json.dump({str(k): list(v) for k, v in index.items()}, f, ensure_ascii=False)
 
 def search(word, index_file='index.json'):
     with open(index_file, 'r', encoding='utf-8') as f:
@@ -55,7 +55,7 @@ def search(word, index_file='index.json'):
     # Find the cluster of the word
     if word in model.wv:
         word_vector = model.wv[word].reshape(1, -1)
-        cluster_id = kmeans.predict(word_vector)[0]
+        cluster_id = KMeans.predict(word_vector)[0]
         return set(index.get(cluster_id, []))
     else:
         return set()
