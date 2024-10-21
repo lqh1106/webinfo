@@ -18,13 +18,16 @@ def convert_text(text, conversion_type='s2t'):
         
 def load_synonym_dict(file_path):
     synonym_dict = {}
+    code = ''
     with open(file_path, 'r', encoding='utf-8') as file:
         for line in file:
             # 使用正则表达式匹配 '=', '#' 或 '@' 作为分隔符
-            code, synonyms = re.split(r'[=#@]\s', line.strip(), maxsplit=1)
+            newcode, synonyms = re.split(r'[=#@]\s', line.strip(), maxsplit=1)
             synonym_list = synonyms.split(' ')
             if synonym_list:  # 确保有近义词
-                center_word = synonym_list[0]  # 第一个词作为中心词
+                if newcode[:7] != code[0:7]:
+                    code = newcode
+                    center_word = synonym_list[0]  # 第一个词作为中心词
                 for word in synonym_list:
                     synonym_dict[word] = center_word
     return synonym_dict
