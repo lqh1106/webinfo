@@ -59,7 +59,7 @@ def is_numeric_or_symbol(word):
 # 加载百度停用词库（替换为你的停用词文件路径）
 stopwords = load_stopwords('lab1-1/dataset/baidu_stopwords.txt')
 synonym_dict = load_synonym_dict('lab1-1/dataset/dict_synonym.txt')
-oringal_data = pd.read_csv('lab1-1/dataset/selected_movie_top_1200_data_tag.csv')
+oringal_data = pd.read_csv('lab1-1/dataset/selected_movie_top_1200_data_tag.csv')[:1]
 
 
 data = {"Movie": [], "Tags": []}
@@ -72,11 +72,11 @@ for number, tags in zip(oringal_data['Movie'], oringal_data['Tags']):
         jieba_words = [word for word in jieba.lcut(
             tag) if not is_numeric_or_symbol(word)]#jieba分词，并删除纯数字或符号串
         simplified_words=[convert_text(traditional_text, 't2s') for traditional_text in jieba_words]#繁体转简体
-        filtered_words = [
-            word for word in simplified_words if word not in stopwords]#删除停用词
-        synonym_replaceed = replace_with_center_word(
-            filtered_words, synonym_dict)# 同义词替换为中心词
-        words += synonym_replaceed
+        a = replace_with_center_word(
+            simplified_words, synonym_dict)# 同义词替换为中心词
+        a = [
+            word for word in a if word not in stopwords]#删除停用词
+        words += a
         
     data['Movie'].append(number)
     data['Tags'].append(words)
