@@ -28,16 +28,16 @@ for tag in inverted_index:
     
     inverted_index[tag].sort()
     
-    pre = 0
-    for index in range(len(inverted_index[tag])):
-        if index == 0:
-            pre = inverted_index[tag][index]
-            continue
-        minus = inverted_index[tag][index] - pre
-        pre = inverted_index[tag][index]
-        inverted_index[tag][index] = minus
+    # pre = 0
+    # for index in range(len(inverted_index[tag])):
+    #     if index == 0:
+    #         pre = inverted_index[tag][index]
+    #         continue
+    #     minus = inverted_index[tag][index] - pre
+    #     pre = inverted_index[tag][index]
+    #     inverted_index[tag][index] = minus
         
-    inverted_index[tag] = [index+1, inverted_index[tag]]# 储存频率和文档ID列表
+    inverted_index[tag] = [len(inverted_index[tag]), inverted_index[tag]]# 储存频率和文档ID列表
         
 # 将倒排表按tag排序
 inverted_index = dict(sorted(inverted_index.items()))
