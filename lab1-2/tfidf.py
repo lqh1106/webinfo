@@ -23,8 +23,6 @@ tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=feature_names)
 tfidf_df.insert(0, 'Book', data['Book'])
 
 # 输出文档和词的向量化表达
-print("TF-IDF 矩阵：")
-print(tfidf_df)
 
 # 保存结果到 CSV 文件
 tfidf_df.to_csv('lab1-2/data/tfidf_result.csv', index=False)

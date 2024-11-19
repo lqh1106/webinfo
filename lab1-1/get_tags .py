@@ -2,6 +2,7 @@ import jieba
 import pandas as pd
 import re
 import opencc
+import pkuseg
 
 converter_s2t = opencc.OpenCC('s2t')
 converter_t2s = opencc.OpenCC('t2s')
@@ -38,10 +39,9 @@ def replace_with_center_word(words, synonym_dict):
     return new_words
 
 
-def save_data(data):
+def save_data(data, file_path):
     df = pd.DataFrame(data)
     # Save as CSV
-    file_path = 'lab1-1/dataset/movie_tag.csv'
     df.to_csv(file_path, index=False, encoding='utf-8')
 
 
@@ -55,29 +55,109 @@ def is_numeric_or_symbol(word):
     # 匹配纯数字或纯符号的字符串
     return bool(re.fullmatch(r'[\d]+|[^\w\s]+', word))
 
+def get_tags(original_data, original_data_type, stopwords, synonym_dict, cut_type, file_path, pkuseg):
+    data = {original_data_type: [], "Tags": []}
+    for number, tags in zip(original_data[original_data_type], original_data['Tags']):
+        tags = tags.strip("{}")
+        tags_list = [item.strip().strip("','")
+                        for item in tags.split(",")]
+        words = []
+        for tag in tags_list:
+            simplified_tag = convert_text(tag, 't2s') #繁体转简体
+            if cut_type == 'jieba':
+                cut_words = [word for word in jieba.lcut(
+                    simplified_tag) if not is_numeric_or_symbol(word)] #jieba分词，并删除纯数字或符号串
+            elif cut_type == 'pkuseg':
+                cut_words = [word for word in pkuseg.cut(
+                    simplified_tag) if not is_numeric_or_symbol(word)] #jieba分词，并删除纯数字或符号串
+            a = replace_with_center_word(cut_words, synonym_dict) # 同义词替换为中心词
+            a = [word for word in a if word not in stopwords] #删除停用词
+            words += a
+        data[original_data_type].append(number)
+        data['Tags'].append(words)
+    save_data(data, file_path)
 
-# 加载百度停用词库（替换为你的停用词文件路径）
-stopwords = load_stopwords('lab1-1/dataset/baidu_stopwords.txt')
-synonym_dict = load_synonym_dict('lab1-1/dataset/dict_synonym.txt')
-oringal_data = pd.read_csv('lab1-1/dataset/selected_movie_top_1200_data_tag.csv')[:1]
+def is_english(text):
+    # 判断是否为英文
+    return bool(re.match(r'^[a-zA-Z]+$', text))
 
+def bidirectional_maximum_matching(text, dictionary):
+    # 正向最大匹配
+    def forward_match(text):
+        words = []
+        while text:
+            for i in range(len(text), 0, -1):
+                # 将英文单词整个保存，不分词
+                if is_english(text[:i]):
+                    words.append(text[:i])
+                    text = text[i:]
+                    break
+                if text[:i] in dictionary:
+                    words.append(text[:i])
+                    text = text[i:]
+                    break
+            else:
+                words.append(text[0])
+                text = text[1:]
+        return words
 
-data = {"Movie": [], "Tags": []}
-for number, tags in zip(oringal_data['Movie'], oringal_data['Tags']):
-    tags = tags.strip("{}")
-    tags_list = [item.strip().strip("','")
-                     for item in tags.split(",")]
-    words = []
-    for tag in tags_list:
-        jieba_words = [word for word in jieba.lcut(
-            tag) if not is_numeric_or_symbol(word)]#jieba分词，并删除纯数字或符号串
-        simplified_words=[convert_text(traditional_text, 't2s') for traditional_text in jieba_words]#繁体转简体
-        a = replace_with_center_word(
-            simplified_words, synonym_dict)# 同义词替换为中心词
-        a = [
-            word for word in a if word not in stopwords]#删除停用词
-        words += a
-        
-    data['Movie'].append(number)
-    data['Tags'].append(words)
-save_data(data)
+    # 反向最大匹配
+    def backward_match(text):
+        words = []
+        while text:
+            for i in range(len(text), 0, -1):
+                # 将英文单词整个保存，不分词
+                if is_english(text[-i:]):
+                    words.append(text[-i:])
+                    text = text[:-i]
+                    break
+                if text[-i:] in dictionary:
+                    words.append(text[-i:])
+                    text = text[:-i]
+                    break
+            else:
+                words.append(text[-1])
+                text = text[:-1]
+        return words[::-1]
+
+    forward_words = forward_match(text)
+    backward_words = backward_match(text)
+    
+    # 选择较短的分词结果
+    if len(forward_words) >= len(backward_words):
+        return backward_words
+    return forward_words
+
+def get_tags_maxmatch(original_data, original_data_type, dictionary, stopwords, synonym_dict, file_path):
+    data = {original_data_type: [], "Tags": []}
+    for number, tags in zip(original_data[original_data_type], original_data['Tags']):
+        tags = tags.strip("{}")
+        tags_list = [item.strip().strip("','")
+                        for item in tags.split(",")]
+        words = []
+        for tag in tags_list:
+            simplified_tag = convert_text(tag, 't2s') #繁体转简体
+            cut_words = [
+                word for word in bidirectional_maximum_matching(simplified_tag, dictionary) if not 
+                is_numeric_or_symbol(word)]
+            a = replace_with_center_word(cut_words, synonym_dict)# 同义词替换为中心词
+            a = [word for word in a if word not in stopwords]#删除停用词
+            words += a
+        data[original_data_type].append(number)
+        data['Tags'].append(words)
+    save_data(data, file_path)
+
+if __name__ == '__main__':
+    stopwords = load_stopwords('lab1-1/dataset/baidu_stopwords.txt')
+    synonym_dict = load_synonym_dict('lab1-1/dataset/dict_synonym.txt')
+    original_data_movie = pd.read_csv('lab1-1/dataset/selected_movie_top_1200_data_tag.csv')
+    original_data_book = pd.read_csv('lab1-1/dataset/selected_book_top_1200_data_tag.csv')
+    pkuseg = pkuseg.pkuseg() 
+    get_tags(original_data_movie, 'Movie', stopwords, synonym_dict, 'jieba', 'lab1-1/dataset/movie_tag.csv', pkuseg)
+    get_tags(original_data_book, 'Book', stopwords, synonym_dict, 'jieba', 'lab1-1/dataset/book_tag.csv', pkuseg)
+    get_tags(original_data_movie, 'Movie', stopwords, synonym_dict, 'pkuseg', 'lab1-1/dataset/movie_tag_pkuseg.csv', pkuseg)
+    get_tags(original_data_book, 'Book', stopwords, synonym_dict, 'pkuseg', 'lab1-1/dataset/book_tag_pkuseg.csv', pkuseg)
+    jieba.initialize()
+    jieba_dict = set(jieba.dt.FREQ.keys())
+    get_tags_maxmatch(original_data_movie, 'Movie', jieba_dict, stopwords, synonym_dict, 'lab1-1/dataset/movie_tag_maxmatch.csv')
+    get_tags_maxmatch(original_data_book, 'Book', jieba_dict, stopwords, synonym_dict, 'lab1-1/dataset/book_tag_maxmatch.csv')
