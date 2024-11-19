@@ -33,7 +33,6 @@ def load_synonym_dict(file_path):
                     synonym_dict[word] = center_word
     return synonym_dict
 
-
 def replace_with_center_word(words, synonym_dict):
     new_words = [synonym_dict.get(word, word) for word in words]
     return new_words
@@ -69,7 +68,7 @@ def get_tags(original_data, original_data_type, stopwords, synonym_dict, cut_typ
                     simplified_tag) if not is_numeric_or_symbol(word)] #jieba分词，并删除纯数字或符号串
             elif cut_type == 'pkuseg':
                 cut_words = [word for word in pkuseg.cut(
-                    simplified_tag) if not is_numeric_or_symbol(word)] #jieba分词，并删除纯数字或符号串
+                    simplified_tag) if not is_numeric_or_symbol(word)] #pkuseg分词，并删除纯数字或符号串
             a = replace_with_center_word(cut_words, synonym_dict) # 同义词替换为中心词
             a = [word for word in a if word not in stopwords] #删除停用词
             words += a
@@ -147,17 +146,53 @@ def get_tags_maxmatch(original_data, original_data_type, dictionary, stopwords, 
         data['Tags'].append(words)
     save_data(data, file_path)
 
+def get_tags_without_synonym_pkuseg(original_data, original_data_type, stopwords, file_path, pkuseg):
+    data = {original_data_type: [], "Tags": []}
+    for number, tags in zip(original_data[original_data_type], original_data['Tags']):
+        tags = tags.strip("{}")
+        tags_list = [item.strip().strip("','") for item in tags.split(",")]
+        words = []
+        for tag in tags_list:
+            simplified_tag = convert_text(tag, 't2s')  # 繁体转简体
+            cut_words = [word for word in pkuseg.cut(simplified_tag) if not is_numeric_or_symbol(word)]  # pkuseg分词，并删除纯数字或符号串
+            words += [word for word in cut_words if word not in stopwords]  # 删除停用词
+        data[original_data_type].append(number)
+        data['Tags'].append(words)
+    save_data(data, file_path)
+
+def get_tags_without_stopwords_pkuseg(original_data, original_data_type, synonym_dict, file_path, pkuseg):
+    data = {original_data_type: [], "Tags": []}
+    for number, tags in zip(original_data[original_data_type], original_data['Tags']):
+        tags = tags.strip("{}")
+        tags_list = [item.strip().strip("','") for item in tags.split(",")]
+        words = []
+        for tag in tags_list:
+            simplified_tag = convert_text(tag, 't2s')  # 繁体转简体
+            cut_words = [word for word in pkuseg.cut(simplified_tag) if not is_numeric_or_symbol(word)]  # pkuseg分词，并删除纯数字或符号串
+            a = replace_with_center_word(cut_words, synonym_dict)  # 同义词替换为中心词
+            words += a  # 不进行停用词的过滤
+        data[original_data_type].append(number)
+        data['Tags'].append(words)
+    save_data(data, file_path)
+
+
 if __name__ == '__main__':
     stopwords = load_stopwords('lab1-1/dataset/baidu_stopwords.txt')
     synonym_dict = load_synonym_dict('lab1-1/dataset/dict_synonym.txt')
     original_data_movie = pd.read_csv('lab1-1/dataset/selected_movie_top_1200_data_tag.csv')
     original_data_book = pd.read_csv('lab1-1/dataset/selected_book_top_1200_data_tag.csv')
     pkuseg = pkuseg.pkuseg() 
-    get_tags(original_data_movie, 'Movie', stopwords, synonym_dict, 'jieba', 'lab1-1/dataset/movie_tag.csv', pkuseg)
-    get_tags(original_data_book, 'Book', stopwords, synonym_dict, 'jieba', 'lab1-1/dataset/book_tag.csv', pkuseg)
-    get_tags(original_data_movie, 'Movie', stopwords, synonym_dict, 'pkuseg', 'lab1-1/dataset/movie_tag_pkuseg.csv', pkuseg)
-    get_tags(original_data_book, 'Book', stopwords, synonym_dict, 'pkuseg', 'lab1-1/dataset/book_tag_pkuseg.csv', pkuseg)
-    jieba.initialize()
-    jieba_dict = set(jieba.dt.FREQ.keys())
-    get_tags_maxmatch(original_data_movie, 'Movie', jieba_dict, stopwords, synonym_dict, 'lab1-1/dataset/movie_tag_maxmatch.csv')
-    get_tags_maxmatch(original_data_book, 'Book', jieba_dict, stopwords, synonym_dict, 'lab1-1/dataset/book_tag_maxmatch.csv')
+    # get_tags(original_data_movie, 'Movie', stopwords, synonym_dict, 'jieba', 'lab1-1/dataset/movie_tag.csv', pkuseg)
+    # get_tags(original_data_book, 'Book', stopwords, synonym_dict, 'jieba', 'lab1-1/dataset/book_tag.csv', pkuseg)
+    # get_tags(original_data_movie, 'Movie', stopwords, synonym_dict, 'pkuseg', 'lab1-1/dataset/movie_tag_pkuseg.csv', pkuseg)
+    # get_tags(original_data_book, 'Book', stopwords, synonym_dict, 'pkuseg', 'lab1-1/dataset/book_tag_pkuseg.csv', pkuseg)
+    # jieba.initialize()
+    # jieba_dict = set(jieba.dt.FREQ.keys())
+    # get_tags_maxmatch(original_data_movie, 'Movie', jieba_dict, stopwords, synonym_dict, 'lab1-1/dataset/movie_tag_maxmatch.csv')
+    # get_tags_maxmatch(original_data_book, 'Book', jieba_dict, stopwords, synonym_dict, 'lab1-1/dataset/book_tag_maxmatch.csv')
+
+    # get_tags_without_synonym_pkuseg(original_data_movie, 'Movie', stopwords, 'lab1-1/dataset/movie_tag_without_synonym_pkuseg.csv', pkuseg)
+    get_tags_without_synonym_pkuseg(original_data_book, 'Book', stopwords, 'lab1-1/dataset/book_tag_without_synonym_pkuseg.csv', pkuseg)
+
+    # get_tags_without_stopwords_pkuseg(original_data_movie, 'Movie', synonym_dict, 'lab1-1/dataset/movie_tag_without_stopwords_pkuseg.csv', pkuseg)
+    get_tags_without_stopwords_pkuseg(original_data_book, 'Book', synonym_dict, 'lab1-1/dataset/book_tag_without_stopwords_pkuseg.csv', pkuseg)
