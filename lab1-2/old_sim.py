@@ -15,7 +15,7 @@ def cal_similarity(book_id1, book_id2, tfidf_df):
     return similarity[0][0]
 
 # 读取数据
-loaded_data = pd.read_csv('/workspace/linqihao/webinfo/lab1-2/data/book_score.csv')
+loaded_data = pd.read_csv('../lab1-1/dataset/book_score.csv')
 user_ids = loaded_data['User'].unique()
 book_ids = loaded_data['Book'].unique()
 file_path = 'lab1-2/data/tfidf_result.csv'
@@ -67,5 +67,5 @@ for user, group in tqdm(grouped_user):
 u_items_list_str_keys = {str(k): v for k, v in u_items_list.items()}
 
 # 保存为 JSON 文件
-with open('lab1-2/data/sim_score_minus.json', 'w') as f:
+with open('./data/sim_score_minus.json', 'w') as f:
     json.dump(u_items_list_str_keys, f, indent=4)

@@ -18,10 +18,10 @@ book_score = pd.read_csv('../lab1-1/dataset/book_score.csv')
 movie_score = pd.read_csv('../lab1-1/dataset/movie_score.csv')
 
 # 读取倒排索引字典
-with open('../lab1-1/dataset/inverted_index.json', 'r') as f:
+with open('./data/sim_score.json', 'r', encoding='utf-8') as f:
     inverted_index = json.load(f)
 
-# 倒排索引字典记录 user_id -> { {cosine_similarity, book_id, rate}, ...}
+# 倒排索引字典记录 user_id -> { { book_id, cosine_similarity, rate}, ...}
 # 根据 user_id，使用knn算法对书籍/电影进行推荐，输出结果为 {book_id, rate}的有序列表
 def knn_recommend(user_id, k, is_book):
     # 读取数据
@@ -34,15 +34,18 @@ def knn_recommend(user_id, k, is_book):
     user_score = score[score['User'] == user_id]
 
     # 读取用户的朋友信息
-    with open('./stage2/data/Contacts.txt', 'r') as f:
+    with open('./data/Contacts.txt', 'r') as f:
         contacts = f.readlines()
     contacts = [contact.strip().split(':') for contact in contacts]
     contacts = {contact[0]: contact[1].split(',') for contact in contacts}
 
     # 计算用户的朋友的评分信息
     friends_score = []
+    print(user_id)
     for friend in contacts[user_id]:
         friend_score = score[score['User'] == int(friend)]
+        if friend_score.empty:
+            continue
         friends_score.append(friend_score)
 
     # 计算用户的朋友的评分信息的倒排索引
@@ -51,45 +54,28 @@ def knn_recommend(user_id, k, is_book):
         for index, row in friend_score.iterrows():
             book_id = row['Book'] if is_book else row['Movie']
             rate = row['Rate']
+            if book_id in user_score['Book'].values: # 如果用户已经评分过该书籍，则不考虑
+                continue
             if book_id in friends_inverted_index:
                 friends_inverted_index[book_id].append(rate)
             else:
                 friends_inverted_index[book_id] = [rate]
 
-    # 计算用户的朋友的评分信息的平均值
-    friends_avg_score = {}
-    for book_id, rates in friends_inverted_index.items():
-        friends_avg_score[book_id] = sum(rates) / len(rates)
+    # 计算朋友的评分书籍与用户的相似度
+    for book_id in friends_inverted_index:
+        # 计算 book_id 在user_id评价过的书籍中的相似度
+        cosine_similarity = 0
+        srate = 0
+        for i in inverted_index[user_id][2]:
+            if i[0] == book_id:
+                cosine_similarity = i[1]
+                srate = i[2]
+                break
+        friends_inverted_index[book_id] = cosine_similarity * srate * np.mean(friends_inverted_index[book_id])
+    
+    print (friends_inverted_index)
+    sorted_friends_inverted_index = sorted(friends_inverted_index.items(), key=lambda x: x[1], reverse=True)
+    return sorted_friends_inverted_index[:k]
+    
 
-    # 计算用户的朋友的评分信息的标准差
-    friends_std_score = {}
-    for book_id, rates in friends_inverted_index.items():
-        friends_std_score[book_id] = np.std(rates)
-
-    # 计算用户的朋友的评分信息的归一化值
-    friends_norm_score = {}
-    for book_id, rate in friends_avg_score.items():
-        friends_norm_score[book_id] = (rate - min(friends_avg_score.values())) / (max(friends_avg_score.values()) - min(friends_avg_score.values()))
-
-    # 计算用户的朋友的评分信息的相似度
-    friends_similarity = {}
-    for book_id, rate in friends_norm_score.items():
-        friends_similarity[book_id] = 1 - math.sqrt((rate - friends_norm_score[user_id]) ** 2)
-
-    # 计算用户的朋友的评分信息的加权平均值
-    friends_weighted_score = {}
-    for book_id, rate in friends_avg_score.items():
-        friends_weighted_score[book_id] = rate * friends_similarity[book_id]
-
-    # 计算用户的朋友的评分信息的加权平均值的排序
-    friends_weighted_score = sorted(friends_weighted_score.items(), key=lambda x: x[1], reverse=True)
-
-    # 计算用户的朋友的评分信息的加权平均值的前k个
-    friends_weighted_score = friends_weighted_score[:k]
-
-    # 计算用户的朋友的评分信息的加权平均值的前k个的推荐结果
-    friends_recommend = []
-    for book_id, rate in friends_weighted_score:
-        friends_recommend.append(book_id)
-
-    return friends_recommend
+print(knn_recommend('34894527', 5, True))

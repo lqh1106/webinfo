@@ -26,7 +26,7 @@ def ndcg(target_sort, answer_sort):
     return ndcg
     
     
-with open('lab1-2/data/bookdata/sim_score_minus.json', 'r') as f:
+with open('./data/sim_score_minus.json', 'r') as f:
     data = json.load(f)
     
 target_ratings = []
@@ -77,7 +77,7 @@ y_pred = model.predict(X_test)
 mse = mean_squared_error(y_test, y_pred)
 print(f'Mean Squared Error: {mse}')
 
-with open('lab1-2/data/bookdata/sim_score.json', 'r') as f:
+with open('./data/sim_score.json', 'r') as f:
     data_test = json.load(f)
     
 data = dict(random.sample(data_test.items(), 1000))

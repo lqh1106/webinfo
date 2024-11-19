@@ -25,7 +25,7 @@ def ndcg(target_sort, answer_sort):
         ndcg.append(dcg_val / idcg_val if idcg_val > 0 else 0)
     return ndcg
 
-with open('lab1-2/data/bookdata/sim_score.json', 'r') as f:
+with open('./data/sim_score.json', 'r') as f:
     data = json.load(f)
     
 
