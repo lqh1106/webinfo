@@ -73,11 +73,118 @@ $$
 
 ### 数据处理
 
+```
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+# 读取 CSV 文件
+file_path = 'lab1-2/data/book_tag.csv'
+data = pd.read_csv(file_path)
+
+# 假设 CSV 文件有两列：'Book' 和 'Tags'
+# 将 'Tags' 列中的标签合并为一个字符串
+data['Tags'] = data['Tags'].apply(lambda x: ' '.join(eval(x)))
+
+# 初始化 TfidfVectorizer
+vectorizer = TfidfVectorizer()
+
+# 对 'Tags' 列进行 TF-IDF 分析
+tfidf_matrix = vectorizer.fit_transform(data['Tags'])
+
+# 获取词汇表
+feature_names = vectorizer.get_feature_names_out()
+
+# 将 TF-IDF 矩阵转换为 DataFrame，并添加书的 ID 列
+tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=feature_names)
+tfidf_df.insert(0, 'Book', data['Book'])
+
+# 输出文档和词的向量化表达
+
+# 保存结果到 CSV 文件
+tfidf_df.to_csv('lab1-2/data/tfidf_result.csv', index=False)
+```
+
 ### 评分排序
 
-#### kNN
+#### kNN 
+
+代码见 `knn.py`
+
+```python
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+import json
+import random
+from tqdm import tqdm
+
+def sort_by_rate(answer_ratings,target_ratings):
 
 
+    sorted_indices = np.argsort(answer_ratings)[::-1]
+    sorted_ratings = [target_ratings[i] for i in sorted_indices]
+    
+    return sorted_ratings
+
+def dcg(scores):
+    return np.sum([(2**score - 1) / np.log2(idx + 2) for idx, score in enumerate(scores)])
+
+def ndcg(target_sort, answer_sort):
+    ndcg = []
+    for i in range(len(target_sort)):
+        dcg_val = dcg(answer_sort[:i+1])
+        idcg_val = dcg(target_sort[:i+1])
+        ndcg.append(dcg_val / idcg_val if idcg_val > 0 else 0)
+    return ndcg
+
+with open('./data/sim_score.json', 'r') as f:
+    data = json.load(f)
+    
+
+
+total_ndcg = 0
+total_len = len(data)
+for key ,item in tqdm(data.items()):
+    try:
+        if len(item) == 1:
+            continue
+        target_ratings = []
+        answer_ratings = []
+        ratings = []
+        similarities = []
+        id = []
+        for j in item:
+            if len(j[2])==1:
+                continue
+            id.append(j[0])
+            target_ratings.append(j[1])
+            rating = []
+            similaritie = []
+            for i in j[2]:
+                if i[1] > 0.99:
+                    continue
+                rating.append(i[0])
+                similaritie.append(i[1])
+            ratings.append(rating)
+            similarities.append(similaritie)
+        if target_ratings == []:
+            continue    
+        
+        answer_ratings = [np.dot(r,s)/sum(s) for r,s in zip(ratings,similarities)]
+        
+        answer_sort = sort_by_rate(answer_ratings,target_ratings)
+        target_sort = sorted(target_ratings,reverse=True)
+        ndcg_score = ndcg(target_sort, answer_sort)
+        
+        total_ndcg += ndcg_score[-1]
+        
+    except:
+        total_len -= 1
+        continue
+    
+print(f'NDCG Score: {total_ndcg/total_len}')
+```
 
 #### 线性拟合
 
@@ -172,6 +279,88 @@ for key ,item in tqdm(data.items()):
     
 
 print(f'NDCG Score: {total_ndcg/len(data)}')
+```
+
+### 推荐算法
+
+```python
+import pandas as pd
+import ast
+import json
+import math
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
+
+# 读取CSV文件
+book_score = pd.read_csv('../lab1-1/dataset/book_score.csv')
+movie_score = pd.read_csv('../lab1-1/dataset/movie_score.csv')
+
+# 读取倒排索引字典
+with open('./data/sim_score.json', 'r', encoding='utf-8') as f:
+    inverted_index = json.load(f)
+
+# 倒排索引字典记录 user_id -> { { book_id, cosine_similarity, rate}, ...}
+# 根据 user_id，使用knn算法对书籍/电影进行推荐，输出结果为 {book_id, rate}的有序列表
+def knn_recommend(user_id, k, is_book):
+    # 读取数据
+    if is_book:
+        score = book_score
+    else:
+        score = movie_score
+
+    # 读取用户评分信息
+    user_score = score[score['User'] == user_id]
+
+    # 读取用户的朋友信息
+    with open('./data/Contacts.txt', 'r') as f:
+        contacts = f.readlines()
+    contacts = [contact.strip().split(':') for contact in contacts]
+    contacts = {contact[0]: contact[1].split(',') for contact in contacts}
+
+    # 计算用户的朋友的评分信息
+    friends_score = []
+    print(user_id)
+    for friend in contacts[user_id]:
+        friend_score = score[score['User'] == int(friend)]
+        if friend_score.empty:
+            continue
+        friends_score.append(friend_score)
+
+    # 计算用户的朋友的评分信息的倒排索引
+    friends_inverted_index = {}
+    for friend_score in friends_score:
+        for index, row in friend_score.iterrows():
+            book_id = row['Book'] if is_book else row['Movie']
+            rate = row['Rate']
+            if book_id in user_score['Book'].values: # 如果用户已经评分过该书籍，则不考虑
+                continue
+            if book_id in friends_inverted_index:
+                friends_inverted_index[book_id].append(rate)
+            else:
+                friends_inverted_index[book_id] = [rate]
+
+    # 计算朋友的评分书籍与用户的相似度
+    for book_id in friends_inverted_index:
+        # 计算 book_id 在user_id评价过的书籍中的相似度
+        cosine_similarity = 0
+        srate = 0
+        for i in inverted_index[user_id][2]:
+            if i[0] == book_id:
+                cosine_similarity = i[1]
+                srate = i[2]
+                break
+        friends_inverted_index[book_id] = cosine_similarity * srate * np.mean(friends_inverted_index[book_id])
+    
+    print (friends_inverted_index)
+    sorted_friends_inverted_index = sorted(friends_inverted_index.items(), key=lambda x: x[1], reverse=True)
+    return sorted_friends_inverted_index[:k]
+    
+
+print(knn_recommend('34894527', 5, True)) # 以用户34894527为例，推荐5本书籍
 ```
 
 ## 运行截图
