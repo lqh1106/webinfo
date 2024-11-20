@@ -127,28 +127,30 @@ if __name__ == '__main__':
     ndcg_lam = []
     mse_lam = []
     lam_range=[i / 10 for i in range(1,11)]
-    print("lam_range")
-    for lam in tqdm(lam_range):
-        ave_ndcg,ave_mse = knn_sort(10,lam,True,sim_score,tfidf_df,contacts)
-        ndcg_lam.append(ave_ndcg)
-        mse_lam.append(ave_mse)
-    print("k_range")
+    knn_sort(20,0.4,True,sim_score,tfidf_df,contacts)
     
-    ndcg_k = []
-    mse_k = []
-    k_range=[5,10,20,30,40,50]
-    for k in tqdm(k_range):
-        ave_ndcg,ave_mse = knn_sort(k,0.2,True,sim_score,tfidf_df,contacts)
-        ndcg_k.append(ave_ndcg)
-        mse_k.append(ave_mse)
+    # print("lam_range")
+    # for lam in tqdm(lam_range):
+    #     ave_ndcg,ave_mse = knn_sort(10,lam,True,sim_score,tfidf_df,contacts)
+    #     ndcg_lam.append(ave_ndcg)
+    #     mse_lam.append(ave_mse)
+    # print("k_range")
+    
+    # ndcg_k = []
+    # mse_k = []
+    # k_range=[5,10,20,30,40,50]
+    # for k in tqdm(k_range):
+    #     ave_ndcg,ave_mse = knn_sort(k,0.2,True,sim_score,tfidf_df,contacts)
+    #     ndcg_k.append(ave_ndcg)
+    #     mse_k.append(ave_mse)
         
-    output = {}
-    output['lam_range'] = lam_range
-    output['ndcg_lam'] = ndcg_lam
-    output['mse_lam'] = mse_lam
-    output['k_range'] = k_range
-    output['ndcg_k'] = ndcg_k
-    output['mse_k'] = mse_k
+    # output = {}
+    # output['lam_range'] = lam_range
+    # output['ndcg_lam'] = ndcg_lam
+    # output['mse_lam'] = mse_lam
+    # output['k_range'] = k_range
+    # output['ndcg_k'] = ndcg_k
+    # output['mse_k'] = mse_k
     
-    with open('lab1-2\data\output.json', 'w') as f:
-        json.dump(output, f, indent=4)
+    # with open('lab1-2\data\output.json', 'w') as f:
+    #     json.dump(output, f, indent=4)

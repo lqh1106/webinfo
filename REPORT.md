@@ -1,14 +1,12 @@
 # 实验一 实验报告
 
-组长：龙奕均PB22111659
+组长：龙奕均 PB22111659
 
-组员：林琦皓PB22051003， 杨柄权
+组员：林琦皓 PB22051003， 杨柄权 PB22111686
 
 实验仓库：https://github.com/lqh1106/webinfo.git
 
 [TOC]
-
-
 
 ## 第 1 阶段 豆瓣数据的检索
 
@@ -19,7 +17,7 @@
 ### 实验内容
 
 1. 对给定的电影和书籍数据进行预处理，将文本表征为关键词集合；
-2. 在经过预处理的数据集上建立倒排索引表S，并以合适的方式存储生成的倒排索引文件；
+2. 在经过预处理的数据集上建立倒排索引表 S，并以合适的方式存储生成的倒排索引文件；
 3. 对于给定的包含任意组合（如括号）的布尔查询，使其能够支持复杂的布尔查询操作。返回符合查询规则的电影或/和书籍
    集合，并以合适的方式展现给用户；
 4. 任选两种课程中介绍过的索引压缩方法加以实现，并比较压缩后的索引在存储空间和检索效率上与原索引的区别。
@@ -28,16 +26,16 @@
 
 #### 数据预处理
 
-1. 使用opencc库，将分词结果中的繁体字替换为对应的简体字，以便于分词；
-2. 使用三种方式进行分词，分别为双向最大匹配分词，结巴分词和pkuseg，以便于对分词结果进行对比；
+1. 使用 opencc 库，将分词结果中的繁体字替换为对应的简体字，以便于分词；
+2. 使用三种方式进行分词，分别为双向最大匹配分词，结巴分词和 pkuseg，以便于对分词结果进行对比；
 3. 使用从词林获取的手工标注的同/近义词表，对语义相似的词语进行合并，替换为近义词表的对应行的第一项；
 4. 使用百度的停用词表，将停用词从分期结果中去除；
-5. 完成以上步骤后，将预处理的数据存储在csv文件中。
+5. 完成以上步骤后，将预处理的数据存储在 csv 文件中。
 
 #### 建立倒排表
 
 1. 使用预处理后的数据建立数据结构为字典的单层倒排索引表；
-2. 将倒排索引表存储在.json文件中，以便读取。
+2. 将倒排索引表存储在.json 文件中，以便读取。
 
 #### 实现布尔查询
 
@@ -45,7 +43,7 @@
 
 1. 使用栈来分析复杂的布尔查询的查询条件；
 2. 识别到查询条件中的标签关键字时，先将该关键字替换为近义词表的对应行的第一项，再在倒排索引表中进行查询，并将查询结果储存在栈上；
-3. 运算符的处理：对于AND运算符，利用集合的交集实现；对于OR运算符，利用集合的并集实现；对于NOT运算符，利用集合的补集实现；
+3. 运算符的处理：对于 AND 运算符，利用集合的交集实现；对于 OR 运算符，利用集合的并集实现；对于 NOT 运算符，利用集合的补集实现；
 
 利用真值表进行优化的复杂布尔查询实现方法如下：
 
@@ -58,10 +56,10 @@
 
 实现的两种索引压缩的方法如下：
 
-1. 第一步压缩：使用间距代替文档ID；
+1. 第一步压缩：使用间距代替文档 ID；
 2. 进一步压缩：对间距进行可变长度编码。
 
-将压缩完的倒排索引表打包存储在.pkl文件中，通过对比文件大小来比较存储空间；由于在布尔查询初始化时，已经将压缩后的倒排索引表解压至内存中了，故索引压缩不会影响检索效率，只会影响初始化时的解压速度。
+将压缩完的倒排索引表打包存储在.pkl 文件中，通过对比文件大小来比较存储空间；由于在布尔查询初始化时，已经将压缩后的倒排索引表解压至内存中了，故索引压缩不会影响检索效率，只会影响初始化时的解压速度。
 
 ### 关键代码说明
 
@@ -144,7 +142,7 @@ def replace_with_center_word(words, synonym_dict):
 - **参数**:
   - `data`: 要保存的数据，通常为字典格式。
   - `file_path`: 输出文件的路径。
-  
+
 ```python
 def save_data(data, file_path):
     df = pd.DataFrame(data)
@@ -193,7 +191,7 @@ def is_numeric_or_symbol(word):
 
 - **参数**:
   - `original_data`: 原始数据，包含标签。
-  - `original_data_type`: 数据类型（Movie或Book）。
+  - `original_data_type`: 数据类型（Movie 或 Book）。
   - `stopwords`: 停用词集合。
   - `synonym_dict`: 同义词字典。
   - `cut_type`: 分词类型，可以是 'jieba' 或 'pkuseg'。
@@ -294,7 +292,7 @@ def bidirectional_maximum_matching(text, dictionary):
 
     forward_words = forward_match(text)
     backward_words = backward_match(text)
-    
+
     # 选择较短的分词结果
     if len(forward_words) >= len(backward_words):
         return backward_words
@@ -309,7 +307,7 @@ def bidirectional_maximum_matching(text, dictionary):
 
 - **参数**:
   - `original_data`: 原始数据，包含标签。
-  - `original_data_type`: 数据类型（Movie或Book）。
+  - `original_data_type`: 数据类型（Movie 或 Book）。
   - `dictionary`: 用于分词的词典。
   - `stopwords`: 停用词集合。
   - `synonym_dict`: 同义词字典。
@@ -327,7 +325,7 @@ def get_tags_maxmatch(original_data, original_data_type, dictionary, stopwords, 
         for tag in tags_list:
             simplified_tag = convert_text(tag, 't2s') #繁体转简体
             cut_words = [
-                word for word in bidirectional_maximum_matching(simplified_tag, dictionary) if not 
+                word for word in bidirectional_maximum_matching(simplified_tag, dictionary) if not
                 is_numeric_or_symbol(word)]
             a = replace_with_center_word(cut_words, synonym_dict)# 同义词替换为中心词
             a = [word for word in a if word not in stopwords]#删除停用词
@@ -343,11 +341,11 @@ def get_tags_maxmatch(original_data, original_data_type, dictionary, stopwords, 
 
 `generate_inverted_index(file_path, file_type, output_path)`
 
-从给定的CSV文件生成倒排索引，并将其保存为JSON文件。
+从给定的 CSV 文件生成倒排索引，并将其保存为 JSON 文件。
 
 - **参数**:
-  - `file_path`: 输入的预处理后的csv文件。
-  - `file_type`: 数据类型（Movie或Book）。
+  - `file_path`: 输入的预处理后的 csv 文件。
+  - `file_type`: 数据类型（Movie 或 Book）。
   - `file_path`: 输出文件的路径。
 - **返回**: 无，结果保存到文件中。
 
@@ -367,19 +365,19 @@ def generate_inverted_index(file_path, file_type, output_path):
         book_id = row[file_type]
         # 将字符串形式的列表转换为真实的Python列表
         tags = ast.literal_eval(row['Tags'])
-        
+
         # 遍历每个标签
         for tag in set(tags):  # 使用set去重，避免重复
             if tag not in inverted_index:
                 inverted_index[tag] = []
             inverted_index[tag].append(book_id)
-            
+
     # 对倒排索引表中的文档ID列表进行排序
     for tag in inverted_index:
         inverted_index[tag].sort()
         # 储存频率和文档ID列表
         inverted_index[tag] = [len(inverted_index[tag]), inverted_index[tag]]
-        
+
     # 将倒排表按tag排序
     inverted_index = dict(sorted(inverted_index.items()))
 
@@ -473,13 +471,13 @@ def replace_with_center_word(word, synonym_dict):
 def boolean_query_basic(inverted_index, query, synonyms_dict):
     # 去除多余的空格
     query = query.strip()
-    
+
     # 定义操作符
     operators = {'AND', 'OR', 'NOT'}
-    
+
     # 定义运算符的优先级
     precedence = {'AND': 2, 'OR': 1, 'NOT': 3}
-    
+
     # 用于存储操作数和运算符的栈
     output_stack = []
     operator_stack = []
@@ -503,7 +501,7 @@ def boolean_query_basic(inverted_index, query, synonyms_dict):
             while operator_stack and operator_stack[-1] != '(':
                 operator = operator_stack.pop()
                 if operator == 'NOT':
-                    operand = output_stack.pop()[1]  
+                    operand = output_stack.pop()[1]
                     all_ids = set()
                     for value in inverted_index.values():
                         if len(value) > 1:
@@ -520,11 +518,11 @@ def boolean_query_basic(inverted_index, query, synonyms_dict):
                         output_stack.append((len(result_set), result_set))  # 取并集
             operator_stack.pop()  # 弹出 '('
         else:
-            while (operator_stack and operator_stack[-1] != '(' and 
+            while (operator_stack and operator_stack[-1] != '(' and
                    precedence[token] <= precedence[operator_stack[-1]]):
                 operator = operator_stack.pop()
                 if operator == 'NOT':
-                    operand = output_stack.pop()[1]  
+                    operand = output_stack.pop()[1]
                     all_ids = set()
                     for value in inverted_index.values():
                         if len(value) > 1:
@@ -578,7 +576,6 @@ def boolean_query_basic(inverted_index, query, synonyms_dict):
 - **返回**: 一个元组，包含两个元素：
   - `found_variables`: 查询中所有布尔变量的列表。
   - `new_string`: 替换同义词后的查询字符串。
-  
 
 ```python
 def extract_variables(query_string, synonym_dict):
@@ -654,13 +651,13 @@ def evaluate(expr, assignment):
 def bool_query_optimized(expr, vars, index_dict):
     # 求index_dict中所有索引集合的并集
     result_set = set()
-    
+
     # 生成所有可能的真值组合
     for assignment in product([False, True], repeat=len(vars)):
         assignment_dict = dict(zip(vars, assignment))
         result = evaluate(expr, assignment_dict)
         temp_set = set.union(*index_dict.values())
-        
+
         # 如果结果为真，则收集该组合的子句
         if result:
             # 判断是否每个变量都为假
@@ -675,7 +672,7 @@ def bool_query_optimized(expr, vars, index_dict):
                 if not assignment_dict[var]:  # 如果变量为假，加入NOT原变量
                     # 求temp_set和index_dict相减
                     temp_set = temp_set.difference(index_dict[var])
-                
+
             # 求temp_set和result_set并集
             result_set = result_set.union(temp_set)
 
@@ -699,7 +696,7 @@ def execute_queries(expression, synonym_dict, inverted_index):
     vars, new_expression = extract_variables(expression, synonym_dict)  # 在表达式中出现的变量
     index_dict = generate_index_dict(inverted_index, vars)  # 生成索引字典
     dnf_result = bool_query_optimized(new_expression, vars, index_dict)
-    return dnf_result  
+    return dnf_result
 ```
 
 #### list_storage.py
@@ -708,12 +705,12 @@ def execute_queries(expression, synonym_dict, inverted_index):
 
 **`front_encoding(ids)`**
 
-使用间距代替文档ID。
+使用间距代替文档 ID。
 
 - **参数**:
-  - `ids`: 原始文档ID列表。
-- **返回**: 压缩后的文档ID列表。
-- **描述**: 如果ID列表为空，返回一个空列表。否则，将第一个ID加入结果列表，其余ID通过减去前一个ID进行压缩。
+  - `ids`: 原始文档 ID 列表。
+- **返回**: 压缩后的文档 ID 列表。
+- **描述**: 如果 ID 列表为空，返回一个空列表。否则，将第一个 ID 加入结果列表，其余 ID 通过减去前一个 ID 进行压缩。
 
 ```python
 def front_encoding(ids):
@@ -735,7 +732,7 @@ def front_encoding(ids):
 - **参数**:
   - `inverted_index`: 原始倒排索引，字典类型。
 - **返回**: 压缩后的倒排索引。
-- **描述**: 使用差分编码对每个标签的文档ID列表进行编码，并返回压缩后的倒排索引。
+- **描述**: 使用差分编码对每个标签的文档 ID 列表进行编码，并返回压缩后的倒排索引。
 
 ```python
 def front_encoding_index(inverted_index):
@@ -743,7 +740,7 @@ def front_encoding_index(inverted_index):
     for tag, (frequency, ids) in inverted_index.items():
         # 计算间距
         gaps = front_encoding(ids)
-        compressed_index[tag] = [frequency, gaps]        
+        compressed_index[tag] = [frequency, gaps]
     return compressed_index
 ```
 
@@ -756,17 +753,17 @@ def front_encoding_index(inverted_index):
 - **参数**:
   - `inverted_index`: 原始倒排索引，字典类型。
 - **返回**: 压缩后的倒排索引。
-- **描述**: 使用差分编码和可变长度编码对倒排索引中的每个文档ID列表进行压缩，并返回结果。
+- **描述**: 使用差分编码和可变长度编码对倒排索引中的每个文档 ID 列表进行压缩，并返回结果。
 
 ```python
 def compress_inverted_index(inverted_index):
-    compressed_index = {}    
+    compressed_index = {}
     for tag, (frequency, ids) in inverted_index.items():
         # 计算间距
-        gaps = front_encoding(ids)        
+        gaps = front_encoding(ids)
         # 使用可变长度编码进行压缩
         encoded_gaps = variable_length_encode(gaps)
-        compressed_index[tag] = [frequency, encoded_gaps]            
+        compressed_index[tag] = [frequency, encoded_gaps]
     return compressed_index
 ```
 
@@ -774,16 +771,16 @@ def compress_inverted_index(inverted_index):
 
 **`variable_length_encode(gaps)`**
 
-对ID进行可变长度编码。
+对 ID 进行可变长度编码。
 
 - **参数**:
   - `gaps`: 要编码的间距列表。
 - **返回**: 编码后的字节流。
-- **描述**: 根据间距值进行编码，低于128的值采用1位延续位，高于128的值采用多个字节表示。
+- **描述**: 根据间距值进行编码，低于 128 的值采用 1 位延续位，高于 128 的值采用多个字节表示。
 
 ```python
 def variable_length_encode(gaps):
-    byte_array = bytearray()    
+    byte_array = bytearray()
     for g in gaps:
         if g < 128:
             # G < 128
@@ -794,7 +791,7 @@ def variable_length_encode(gaps):
                 byte_array.append(g & 0x7F)  # 低7位
                 g >>= 7  # 右移7位
             # print(g | 0x80)
-            byte_array.append(g | 0x80)  # 最后的字节            
+            byte_array.append(g | 0x80)  # 最后的字节
     return bytes(byte_array)
 ```
 
@@ -839,19 +836,19 @@ def variable_length_decode(encoded_bytes):
 - **参数**:
   - `compressed_index`: 压缩后的倒排索引。
 - **返回**: 原始倒排索引。
-- **描述**: 还原压缩后的倒排索引，构建出原始的文档ID列表。
+- **描述**: 还原压缩后的倒排索引，构建出原始的文档 ID 列表。
 
 ```python
 def decompress_inverted_index(compressed_index):
-    inverted_index = {}    
+    inverted_index = {}
     for tag, (frequency, encoded_gaps) in compressed_index.items():
         gaps = variable_length_decode(encoded_gaps)
-        ids = [gaps[0]]  # 第一个间距直接作为id        
+        ids = [gaps[0]]  # 第一个间距直接作为id
         # 根据间距重建ID列表
         for gap in gaps[1:]:
             ids.append(ids[-1] + gap)
-        
-        inverted_index[tag] = [frequency, ids]    
+
+        inverted_index[tag] = [frequency, ids]
     return inverted_index
 ```
 
@@ -896,10 +893,10 @@ def load_index(filename):
 
 ##### 分词结果对比
 
-在实验中使用三种方式进行分词，分别为双向最大匹配分词，结巴分词和pkuseg，将分词结果分别导出到以下位置：
+在实验中使用三种方式进行分词，分别为双向最大匹配分词，结巴分词和 pkuseg，将分词结果分别导出到以下位置：
 
-1. 使用jieba从电影数据中提取标签并导出到：`lab1-1/dataset/movie_tag.csv`
-2. 使用jieba从书籍数据中提取标签并导出到：`lab1-1/dataset/book_tag.csv`
+1. 使用 jieba 从电影数据中提取标签并导出到：`lab1-1/dataset/movie_tag.csv`
+2. 使用 jieba 从书籍数据中提取标签并导出到：`lab1-1/dataset/book_tag.csv`
 3. 使用 pkuseg 对电影数据提取标签并导出到：`lab1-1/dataset/movie_tag_pkuseg.csv`
 4. 使用 pkuseg 对书籍数据提取标签并导出到：`lab1-1/dataset/book_tag_pkuseg.csv`
 5. 使用双向最大匹配算法对电影数据导出标签到：`lab1-1/dataset/movie_tag_maxmatch.csv`
@@ -909,7 +906,7 @@ def load_index(filename):
 
 ![graph1](.\lab1-1\imgs_for_report\graph1.png)
 
-由相似度结果可知，不同分词结果之间的差异较小；具体来说，采用现有的分词工具（jieba和pkuseg）得到的分词结果之间差异最小，而使用双向最大匹配算法得到的分词结果与前两者差异稍大，但总体差异依然较小。这说明在选用合适的词典（本实验双向最大匹配算法使用的词典来自jieba）时，使用双向最大匹配算法得到的分词结果的准确性已经很高了。
+由相似度结果可知，不同分词结果之间的差异较小；具体来说，采用现有的分词工具（jieba 和 pkuseg）得到的分词结果之间差异最小，而使用双向最大匹配算法得到的分词结果与前两者差异稍大，但总体差异依然较小。这说明在选用合适的词典（本实验双向最大匹配算法使用的词典来自 jieba）时，使用双向最大匹配算法得到的分词结果的准确性已经很高了。
 
 ##### 同义词替换效果分析
 
@@ -925,11 +922,11 @@ def load_index(filename):
 
 ![graph5](.\lab1-1\imgs_for_report\graph5.png)
 
-可以看到词语“的”的倒排索引表长度为1192行，这与总的书籍数目几乎相同。诸如此类的无意义词语，带来了大量的信息冗余，浪费了存储空间。
+可以看到词语“的”的倒排索引表长度为 1192 行，这与总的书籍数目几乎相同。诸如此类的无意义词语，带来了大量的信息冗余，浪费了存储空间。
 
 #### 布尔查询效率分析
 
-使用多种测试样例，对两种不同的布尔查询的实现，每个样例分别进行10次查询，计算总耗时，得到如下输出结果：
+使用多种测试样例，对两种不同的布尔查询的实现，每个样例分别进行 10 次查询，计算总耗时，得到如下输出结果：
 
 对于不进行优化的的布尔查询，查询效率如下：
 
@@ -983,9 +980,9 @@ def load_index(filename):
 
 二者进行对比可以发现：
 
-对于不进行优化的的布尔查询实现，如果查询条件中没有NOT，此时不需要遍历整个索引表S，只需要查找布尔变量对应的索引表查询速度很快；如果查询条件中出现NOT，此时需要遍历整个索引表S来求布尔变量的补集，导致查询速度大大降低。而由于使用栈来从左向右分析查询条件，布尔变量的数量多少并不会显著影响到查询速度；
+对于不进行优化的的布尔查询实现，如果查询条件中没有 NOT，此时不需要遍历整个索引表 S，只需要查找布尔变量对应的索引表查询速度很快；如果查询条件中出现 NOT，此时需要遍历整个索引表 S 来求布尔变量的补集，导致查询速度大大降低。而由于使用栈来从左向右分析查询条件，布尔变量的数量多少并不会显著影响到查询速度；
 
-而对于使用真值表进行优化的的布尔查询实现，由于遍历了真值表中的所有表项，所以随着布尔变量数量的增加，查询耗时呈指数级增加，当布尔变量达到8个以上时，会全面慢于不进行优化的布尔查询实现；但当布尔变量较少时，由于只需要布尔变量对应的索引字典，而不需要遍历整个索引表S，在面对查询条件中出现NOT的情况时，查询速度显著快于不进行优化的布尔查询实现。同时，由于只需要布尔变量对应的索引字典，优化后的布尔查询实现占用的内存空间显著降低。
+而对于使用真值表进行优化的的布尔查询实现，由于遍历了真值表中的所有表项，所以随着布尔变量数量的增加，查询耗时呈指数级增加，当布尔变量达到 8 个以上时，会全面慢于不进行优化的布尔查询实现；但当布尔变量较少时，由于只需要布尔变量对应的索引字典，而不需要遍历整个索引表 S，在面对查询条件中出现 NOT 的情况时，查询速度显著快于不进行优化的布尔查询实现。同时，由于只需要布尔变量对应的索引字典，优化后的布尔查询实现占用的内存空间显著降低。
 
 #### 索引压缩效果对比
 
@@ -993,21 +990,19 @@ def load_index(filename):
 
 ##### 存储空间对比
 
-以Book类数据为例，如下图所示：
+以 Book 类数据为例，如下图所示：
 
 ![graph6](.\lab1-1\imgs_for_report\graph6.png)
 
-对于不进行任何压缩的倒排索引表，打包后占用空间大小为1015kB；
+对于不进行任何压缩的倒排索引表，打包后占用空间大小为 1015kB；
 
-在使用间距代替文档ID后，打包后占用空间大小为783kB，压缩了22.9%；
+在使用间距代替文档 ID 后，打包后占用空间大小为 783kB，压缩了 22.9%；
 
-进一步，对间距进行可变长度编码后，打包后占用空间大小为620kB，进一步压缩了20.8%，对比不进行任何压缩的倒排索引表，占用空间仅为原来的61.1%，达到了较好的压缩效果。
+进一步，对间距进行可变长度编码后，打包后占用空间大小为 620kB，进一步压缩了 20.8%，对比不进行任何压缩的倒排索引表，占用空间仅为原来的 61.1%，达到了较好的压缩效果。
 
 ##### 检索效率对比
 
-由于实验的实现中，两种复杂布尔查询的实现都需要首先将倒排索引表S加载到内存中，故是否压缩不会直接影响最后的检索效率；但在布尔查询初始化时，需要对压缩后的倒排索引表进行解压，而压缩程度越大的压缩方式，其解压所需时间也越久，从而间接导致检索速度的下降。
-
-
+由于实验的实现中，两种复杂布尔查询的实现都需要首先将倒排索引表 S 加载到内存中，故是否压缩不会直接影响最后的检索效率；但在布尔查询初始化时，需要对压缩后的倒排索引表进行解压，而压缩程度越大的压缩方式，其解压所需时间也越久，从而间接导致检索速度的下降。
 
 ## 第 2 阶段 豆瓣数据的个性化检索与推荐
 
@@ -1018,7 +1013,7 @@ def load_index(filename):
 ### 实验内容
 
 - 采用协同过滤方式，仅利用用户-项目（电影或书籍）的评分矩阵进行评分预测。
-- 根据提供的 tag 等文本信息进行辅助预测，辅助形式自行选择（如：使用tag 补充书籍的信息）。
+- 根据提供的 tag 等文本信息进行辅助预测，辅助形式自行选择（如：使用 tag 补充书籍的信息）。
 - 基于社交网络关系的推荐。
 
 ### 实验方法
@@ -1031,19 +1026,22 @@ def load_index(filename):
 
 此处我们给出两种计算预测评分的方法：基于 kNN 的评分预测方法和线性拟合方法。
 
-***基于项目推荐的协同过滤***
+**_基于项目推荐的协同过滤_**
 
 对于用户评价过的某一本书籍/电影，我们可以找到与其最为相似的 k 本书籍/电影，计算该用户对这 k 本书籍/电影的评分的加权平均值作为预测评分。
 
-获取该用户对其他项目的评分信息，计算需要预测项目与其他项目的相似度，通过基于相似度的KNN方法预测该项目的评分，对候选项目依据评分进行排序以展示用户偏好
+获取该用户对其他项目的评分信息，计算需要预测项目与其他项目的相似度，通过基于相似度的 KNN 方法预测该项目的评分，对候选项目依据评分进行排序以展示用户偏好
+
 $$
 \text{rating} = \frac{\sum_{i=1}^{k} \text{rating}_i \cdot \text{similarity}_i}{\sum_{i=1}^{k} \text{similarity}_i}
 $$
-***基于相似度的线性回归***
+
+**_基于相似度的线性回归_**
 
 同样使用相似度，将相似度与对应评分进行线性回归，损失函数设置为与正确评分的平均平方差，得到预测模型
 
-此时我们划分训练集和测试集，划分比例为1:9，使用训练集训练线性回归模型，然后使用测试集计算 MSE 和 NDCG。
+此时我们划分训练集和测试集，划分比例为 1:9，使用训练集训练线性回归模型，然后使用测试集计算 MSE 和 NDCG。
+
 $$
 \text{rating} = \sum_{i=1}^{n} w_i \cdot \text{feature}_i
 $$
@@ -1056,9 +1054,9 @@ $$
 
 #### 项目相似程度的度量
 
-通过实验一第一阶段获得的booktags数据（即对项目的所有评价进行分词，近义词规划）得到该项目的tags表，计算所有项目和在所有词项下的tf-idf评分，将评分数据作为改项目的特征向量，计算不同项目的特征向量的余弦相似度来获得任意两个向量的相似度
+通过实验一第一阶段获得的 booktags 数据（即对项目的所有评价进行分词，近义词规划）得到该项目的 tags 表，计算所有项目和在所有词项下的 tf-idf 评分，将评分数据作为改项目的特征向量，计算不同项目的特征向量的余弦相似度来获得任意两个向量的相似度
 
-##### 计算tfidf
+##### 计算 tfidf
 
 ```python
 data['Tags'] = data['Tags'].apply(lambda x: ' '.join(eval(x)))
@@ -1083,10 +1081,10 @@ tfidf_df.insert(0, 'Book', data['Book'])
 
 ```python
 def cal_similarity(books,rates,book,tfidf_df):
-    
+
     if books == []:
-        return 
-    
+        return
+
     book_vector1 = tfidf_df[tfidf_df['Book'] == idx_to_book.get(book)].iloc[:, 1:].values
 
     sim_scores = []
@@ -1110,7 +1108,7 @@ def cal_similarity(books,rates,book,tfidf_df):
 
 ```python
     u_items_list[str(idx_to_user.get(user))] = []
-    
+
     for i in range(len(books)):
         if rates[i] == 0:
             continue
@@ -1178,11 +1176,11 @@ def cal_similarity(books,rates,book,tfidf_df):
 
 由此获得一个项目与社交网络交互数据的关系和表示
 
-#### K近邻分析
+#### K 近邻分析
 
-分别计算两部分交互数据表示的k近邻
+分别计算两部分交互数据表示的 k 近邻
 
-具体方法是选取交互数据表示中与本项目相似度最高的前k个
+具体方法是选取交互数据表示中与本项目相似度最高的前 k 个
 
 ```python
 def slicing(ratings,similarities,k):
@@ -1201,7 +1199,7 @@ def slicing(ratings,similarities,k):
     return sliced_ratings,sliced_similarities
 ```
 
-利用相似度对这k个评分数据加权平均
+利用相似度对这 k 个评分数据加权平均
 
 ```python
 answer_ratings = [np.dot(r,s)/sum(s) for r,s in zip(ratings,similarities)]
@@ -1222,7 +1220,7 @@ answer_ratings = [np.dot(r,s)/sum(s) for r,s in zip(ratings,similarities)]
 
 #### 线性回归
 
-将特征值定义为历史交互记录的评分和相似度，padding补足到定长
+将特征值定义为历史交互记录的评分和相似度，padding 补足到定长
 
 ```py
 max_len = max(len(r) for r in ratings)
@@ -1258,7 +1256,7 @@ model.fit(X_train, y_train)
 
 #### 性能测试方法
 
-采用MSG 和 NDCG两种度量来评估实验结果
+采用 MSG 和 NDCG 两种度量来评估实验结果
 
 ##### MSG
 
@@ -1268,11 +1266,11 @@ mean_squared_error(target_sort, answer_sort)
 
 ##### NDCG
 
-统一对结果的前五位做利用用户真实评分信息做NDCG分析，获取排序效果
+统一对结果的前五位做利用用户真实评分信息做 NDCG 分析，获取排序效果
 
 ```python
 def dcg(scores):
-    
+
     return np.sum([(2**score - 1) / np.log2(idx + 2) for idx, score in enumerate(scores)])
 
 
@@ -1284,8 +1282,6 @@ def ndcg(target_sort, answer_sort):
         ndcg.append(dcg_val / idcg_val if idcg_val > 0 else 0)
     return ndcg
 ```
-
-
 
 ### 结果分析
 
@@ -1300,8 +1296,6 @@ def ndcg(target_sort, answer_sort):
 
 在这里我们可以看到，线性回归的效果略好于 kNN 方法。NDGC 的值在 0.8 左右，说明我们的预测效果还是不错的。
 
-![output](C:\Users\林帜\Desktop\output.png)
-
 #### **基于历史评分数据**的评分预测 和 **基于社交网络评分数据**的评分预测
 
 最终的评分数据由**基于历史评分数据**的评分预测 和 **基于社交网络评分数据**的评分预测 加权平均而来
@@ -1314,21 +1308,17 @@ $$
 \lambda
 $$
 
- 
-
-- kNN的控制参数，即选取TOP相关度数据的个数
+- kNN 的控制参数，即选取 TOP 相关度数据的个数
   $$
   k
   $$
 
-分别控制lambd在0~1，k在[5,10,20,30,40,50]浮动 获取评分预测的表现
-
-
-
-可以看出评分在lambd = ，k = 
-
-取最高值
+分别控制 lambd 在 0~1，k 在[5,10,20,30,40,50]浮动 获取评分预测的表现
+![graph8](.\lab1-1\imgs_for_report\output.png)
+可以看出评分在 lambd = 0.4，k = 20 时取最高值
 
 由此得到我们基于协同过滤的评分推荐系统最终方案
 
-利用最终方案运行，得到实验表现：
+利用最终方案运行，得到实验表现：![graph7](.\lab1-1\imgs_for_report\graph7.png)
+
+NDCG: 0.6489394972124066, MSE : 0.8800557529617123
