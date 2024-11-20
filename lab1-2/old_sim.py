@@ -15,10 +15,10 @@ def cal_similarity(book_id1, book_id2, tfidf_df):
     return similarity[0][0]
 
 # 读取数据
-loaded_data = pd.read_csv('../lab1-1/dataset/book_score.csv')
+loaded_data = pd.read_csv('webinfo/data/book_score.csv')
 user_ids = loaded_data['User'].unique()
 book_ids = loaded_data['Book'].unique()
-file_path = 'lab1-2/data/tfidf_result.csv'
+file_path = 'webinfo/data/tfidf_result.csv'
 tfidf_df = pd.read_csv(file_path)
 # 创建 ID 映射
 user_to_idx, idx_to_user = create_id_mapping(user_ids)
@@ -38,8 +38,10 @@ for user, group in tqdm(grouped_user):
     rates = group['Rate'].tolist()
     
     
-    # 预计算用户书籍的相似度矩阵
-    book_vectors = tfidf_df[tfidf_df['Book'].isin([idx_to_book.get(book) for book in books])].iloc[:, 1:].values
+    book_names = [idx_to_book.get(book) for book in books]
+    filtered_df = tfidf_df[tfidf_df['Book'].isin(book_names)]
+    book_vectors = filtered_df.set_index('Book').loc[book_names].iloc[:, 1:].values
+    
     similarity_matrix = cosine_similarity(book_vectors)
     if len(books) != similarity_matrix.shape[0] and len(books) != similarity_matrix.shape[1]:
         continue
@@ -67,5 +69,5 @@ for user, group in tqdm(grouped_user):
 u_items_list_str_keys = {str(k): v for k, v in u_items_list.items()}
 
 # 保存为 JSON 文件
-with open('./data/sim_score_minus.json', 'w') as f:
+with open('webinfo/data/sim_score.json', 'w') as f:
     json.dump(u_items_list_str_keys, f, indent=4)
